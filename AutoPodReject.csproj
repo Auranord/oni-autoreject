@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
     <AssemblyName>AutoPodReject</AssemblyName>
     <RootNamespace>AutoPodReject</RootNamespace>
     <LangVersion>latest</LangVersion>
@@ -8,7 +8,6 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -18,6 +17,18 @@
 
   <ItemGroup>
     <Compile Include="src/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PLib" Version="4.22.0.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.40">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net48" Version="1.0.3">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup Condition="'$(OniManagedDir)' != ''">
@@ -37,10 +48,6 @@
       <HintPath>$(OniManagedDir)/Newtonsoft.Json.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="PeterHan.PLib">
-      <HintPath>$(OniManagedDir)/PeterHan.PLib.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
     <Reference Include="UnityEngine">
       <HintPath>$(OniManagedDir)/UnityEngine.dll</HintPath>
       <Private>false</Private>
@@ -50,4 +57,27 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
+
+  <Target Name="RepackPLibIntoMod" AfterTargets="Build" Condition="'$(DesignTimeBuild)' != 'true'">
+    <ItemGroup>
+      <_PLibMergeAssemblies Include="@(ReferencePath)" Condition="$([System.String]::Copy('%(Filename)').StartsWith('PeterHan.PLib'))" />
+      <_ILRepackInputAssemblies Include="$(TargetPath)" />
+      <_ILRepackInputAssemblies Include="@(_PLibMergeAssemblies)" />
+    </ItemGroup>
+
+    <Error Condition="'@(_PLibMergeAssemblies)' == ''" Text="No PLib assemblies were resolved from the PLib NuGet package; cannot create bundled AutoPodReject.dll." />
+
+    <Message Importance="high" Text="Bundling PLib into $(TargetPath): @(_PLibMergeAssemblies->'%(Filename)%(Extension)', ', ')" />
+    <ILRepack
+      InputAssemblies="@(_ILRepackInputAssemblies)"
+      OutputFile="$(TargetDir)$(AssemblyName).repacked.dll"
+      TargetKind="Dll"
+      Internalize="false"
+      DebugInfo="true"
+      Parallel="true" />
+
+    <Copy SourceFiles="$(TargetDir)$(AssemblyName).repacked.dll" DestinationFiles="$(TargetPath)" />
+    <Delete Files="$(TargetDir)$(AssemblyName).repacked.dll" />
+    <Delete Files="@(_PLibMergeAssemblies->'$(TargetDir)%(Filename)%(Extension)')" />
+  </Target>
 </Project>
