@@ -15,6 +15,10 @@ The mod is disabled by default. Enable it from the ONI mod options menu when you
 - No offer scoring, whitelists, or blacklists.
 - No hard dependency on Printing Pod Recharge.
 
+## Dependencies
+
+PLib is bundled into the mod DLL at build time. Users do not need to install a separate PLib Workshop mod.
+
 ## Printing Pod Recharge compatibility
 
 Auto Pod Reject always uses the normal `Telepad.RejectAll()` path instead of ending immigration directly. This preserves compatibility with mods that patch the reject flow, including Printing Pod Recharge.
