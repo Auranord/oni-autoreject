@@ -8,6 +8,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -60,12 +61,12 @@
 
   <Target Name="RepackPLibIntoMod" AfterTargets="Build" Condition="'$(DesignTimeBuild)' != 'true'">
     <ItemGroup>
-      <_PLibMergeAssemblies Include="@(ReferencePath)" Condition="$([System.String]::Copy('%(Filename)').StartsWith('PeterHan.PLib'))" />
+      <_PLibMergeAssemblies Include="$(OutputPath)PLib.dll" Condition="Exists('$(OutputPath)PLib.dll')" />
       <_ILRepackInputAssemblies Include="$(TargetPath)" />
       <_ILRepackInputAssemblies Include="@(_PLibMergeAssemblies)" />
     </ItemGroup>
 
-    <Error Condition="'@(_PLibMergeAssemblies)' == ''" Text="No PLib assemblies were resolved from the PLib NuGet package; cannot create bundled AutoPodReject.dll." />
+    <Error Condition="'@(_PLibMergeAssemblies)' == ''" Text="PLib.dll was not found at $(OutputPath)PLib.dll; ensure the PLib NuGet package is restored and copied locally before bundling." />
 
     <Message Importance="high" Text="Bundling PLib into $(TargetPath): @(_PLibMergeAssemblies->'%(Filename)%(Extension)', ', ')" />
     <ILRepack
@@ -74,10 +75,11 @@
       TargetKind="Dll"
       Internalize="false"
       DebugInfo="true"
-      Parallel="true" />
+      Parallel="true"
+      LibraryPath="$(OutputPath);$(OniManagedDir)" />
 
     <Copy SourceFiles="$(TargetDir)$(AssemblyName).repacked.dll" DestinationFiles="$(TargetPath)" />
     <Delete Files="$(TargetDir)$(AssemblyName).repacked.dll" />
-    <Delete Files="@(_PLibMergeAssemblies->'$(TargetDir)%(Filename)%(Extension)')" />
+    <Delete Files="@(_PLibMergeAssemblies)" />
   </Target>
 </Project>
