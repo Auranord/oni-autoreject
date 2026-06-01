@@ -4,7 +4,6 @@ using PeterHan.PLib.Options;
 namespace AutoPodReject
 {
     [JsonObject(MemberSerialization.OptIn)]
-    [ModInfo]
     public sealed class ModSettings
     {
         public static ModSettings Instance => POptions.ReadSettings<ModSettings>() ?? new ModSettings();
